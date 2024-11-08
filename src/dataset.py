@@ -22,8 +22,11 @@ class Flickr8kDataset(Dataset):
         image_id = self.image_ids[idx]
         image_path = os.path.join(self.images_path, image_id)
         image = Image.open(image_path).convert('RGB')
+        
+        # transform the image if it was passed when initialized
         if self.transform:
             image = self.transform(image)
+            
         caption = self.captions_dict[image_id]
         return image, caption
 
