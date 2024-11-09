@@ -2,19 +2,22 @@ import torch
 from dataset import get_dataloader
 from model import Encoder, Decoder
 from train import train_model
-from utils import build_vocab, process_captions
+from utils import build_vocab, load_captions
 
 def main():
-    # Load vocabulary and dataloader
-    vocab, captions_dict = build_vocab()
-    dataloader = get_dataloader(captions_dict, vocab)
+    # Load captions and vocabulary
+    captions_dict = load_captions()
+    vocab = build_vocab(captions_dict)
 
-    # Define model parameters
+    # Create dataloader
+    dataloader = get_dataloader(captions_dict)
+
+    # Model parameters
     embed_size = 256
     hidden_size = 512
     vocab_size = len(vocab)
 
-    # Initialize the encoder and decoder
+    # Initialize encoder and decoder
     encoder = Encoder()
     decoder = Decoder(vocab_size, embed_size, hidden_size)
 

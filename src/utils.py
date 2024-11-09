@@ -1,21 +1,40 @@
 import csv
 import pandas as pd
-from torchtext.vocab import build_vocab_from_iterator
+from nltk.tokenize import TreebankWordTokenizer
+from collections import Counter
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+tokenizer = TreebankWordTokenizer()
+
+# Tokenize a single caption
 def tokenize_caption(caption):
-    return caption.lower().split()
+    return tokenizer.tokenize(caption.lower())
 
-def yield_tokens(captions_dict):
+
+# Build vocabulary from the tokenized captions
+def build_vocab(captions_dict, min_freq=1):
+    counter = Counter()
     for captions in captions_dict.values():
         for caption in captions:
-            yield tokenize_caption(caption) # yield instead of return because we want to keep going through the dataset
+            tokens = tokenize_caption(caption)
+            counter.update(tokens)
 
-def build_vocab():
+    # Assign each word in the vocabulary an index
+    vocab = {"<pad>": 0, "<unk>": 1, "<bos>": 2, "<eos>": 3}
+    for word, count in counter.items():
+        if count >= min_freq:
+            vocab[word] = len(vocab)
+    
+    return vocab
+
+# Load and process captions
+def load_captions():
     dataset_path = os.getenv('DATASET_PATH')
     captions_file = os.path.join(dataset_path, 'captions.txt')
     
-    # Load and process captions (csv)
     with open(captions_file, 'r') as f:
         reader = csv.reader(f, delimiter=',')
         captions_data = [(row[0].strip(), row[1].strip()) for row in reader]
@@ -23,8 +42,4 @@ def build_vocab():
     captions_df = pd.DataFrame(captions_data, columns=['image', 'caption'])
     captions_dict = captions_df.groupby('image')['caption'].apply(list).to_dict()
     
-    # <unk> - unknown, <pad> - padding, <bos> - beginning of sentence, <eos> - end of sentence
-    vocab = build_vocab_from_iterator(yield_tokens(captions_dict), specials=["<unk>", "<pad>", "<bos>", "<eos>"])
-    vocab.set_default_index(vocab["<unk>"])
-    
-    return vocab, captions_dict
+    return captions_dict
