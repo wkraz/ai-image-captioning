@@ -21,13 +21,12 @@ def train_model(encoder, decoder, dataloader, vocab, num_epochs=5, learning_rate
             image_features = encoder(images)  # (batch_size, feature_dim)
 
             # Process captions
-            # Convert batch of captions to tensors and pad them to the same length
             caption_tensors = [caption_to_tensor(caption, vocab) for caption in captions_batch]
             captions = pad_sequence(caption_tensors, batch_first=True, padding_value=vocab["<pad>"])
 
             # Split captions into inputs and targets
-            inputs = captions[:, :-1]  # All tokens except last for input
-            targets = captions[:, 1:]  # All tokens except first for target
+            inputs = captions[:, :-1]
+            targets = captions[:, 1:]
 
             # Check if batch sizes match
             if image_features.size(0) != inputs.size(0):
@@ -35,9 +34,9 @@ def train_model(encoder, decoder, dataloader, vocab, num_epochs=5, learning_rate
                 continue
 
             # Forward pass through decoder
-            outputs = decoder(image_features, inputs)  # (batch_size, seq_length, vocab_size)
+            outputs = decoder(image_features, inputs)
 
-            # Adjust lengths if necessary to ensure they match
+            # Adjust lengths if necessary
             min_length = min(outputs.shape[1], targets.shape[1])
             outputs = outputs[:, :min_length, :]
             targets = targets[:, :min_length]
@@ -55,3 +54,11 @@ def train_model(encoder, decoder, dataloader, vocab, num_epochs=5, learning_rate
 
         avg_loss = total_loss / batch_count
         print(f"Epoch [{epoch+1}/{num_epochs}], Average Loss: {avg_loss:.4f}")
+
+        # Save the model after each epoch
+        torch.save(encoder.state_dict(), f'/content/encoder_epoch_{epoch+1}.pth')
+        torch.save(decoder.state_dict(), f'/content/decoder_epoch_{epoch+1}.pth')
+
+    # Optionally save the final model state
+    torch.save(encoder.state_dict(), '/content/encoder_final.pth')
+    torch.save(decoder.state_dict(), '/content/decoder_final.pth')
