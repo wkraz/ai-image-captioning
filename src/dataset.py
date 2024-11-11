@@ -21,6 +21,12 @@ class Flickr8kDataset(Dataset):
     def __getitem__(self, idx):
         image_id = self.image_ids[idx]
         image_path = os.path.join(self.images_path, image_id)
+
+        # Skip if the file does not end in '.jpg'
+        if not image_path.endswith('.jpg'):
+            print(f"Skipping non-JPG file: {image_path}")
+            return self.__getitem__((idx + 1) % len(self.image_ids))  # Move to the next item
+
         image = Image.open(image_path).convert('RGB')
         if self.transform:
             image = self.transform(image)
@@ -33,10 +39,12 @@ def get_dataloader(captions_dict, batch_size=4):
     images_path = os.path.join(dataset_path, 'Images')
 
     transform = transforms.Compose([
-        transforms.Resize((299, 299)),
+        transforms.RandomResizedCrop(299),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
+
 
     dataset = Flickr8kDataset(images_path, captions_dict, transform=transform)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)

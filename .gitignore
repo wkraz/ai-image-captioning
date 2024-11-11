@@ -1,2 +1,7 @@
 .venv
 .env
+flickr8k_dataset.zip
+ai-image-captioning.zip
+encoder_final.pth
+decoder_final.pth
+src/__pycache__
