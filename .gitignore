@@ -3,3 +3,4 @@
 encoder_final.pth
 decoder_final.pth
 __pycache__/
+.DS_Store
